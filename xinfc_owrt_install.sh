@@ -107,9 +107,14 @@ mkdir -p /usr/libexec/rpcd
 cp "$LUCI/rpcd-exec/luci.xinfc" /usr/libexec/rpcd/luci.xinfc
 chmod +x /usr/libexec/rpcd/luci.xinfc
 remember "/usr/libexec/rpcd/luci.xinfc"
-mkdir -p /www/luci-static/resources/view
+mkdir -p /www/luci-static/resources/view/locales
 cp "$LUCI/htdocs/luci-static/resources/view/xinfc.js" /www/luci-static/resources/view/xinfc.js
 remember "/www/luci-static/resources/view/xinfc.js"
+for lf in "$LUCI/htdocs/luci-static/resources/view/locales/"*.js; do
+  [ -e "$lf" ] || continue
+  cp "$lf" /www/luci-static/resources/view/locales/
+  remember "/www/luci-static/resources/view/locales/$(basename "$lf")"
+done
 if [ ! -f /etc/config/xinfc ]; then
   cp "$LUCI/root/etc/config/xinfc" /etc/config/xinfc
   remember "/etc/config/xinfc"

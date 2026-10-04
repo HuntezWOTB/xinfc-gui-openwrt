@@ -11,6 +11,7 @@ log() { echo "[xinfc-uninstall] $*"; }
 
 FALLBACK="\
 /www/luci-static/resources/view/xinfc.js
+dir:/www/luci-static/resources/view/locales
 /usr/share/luci/menu.d/luci-app-xinfc.json
 /usr/share/rpcd/acl.d/luci-app-xinfc.json
 /usr/libexec/rpcd/luci.xinfc
@@ -31,6 +32,17 @@ CHANGED=0
 for entry in $LIST; do
   case "$entry" in
     keep:*) log "foreign, skipping: ${entry#keep:}"; continue ;;
+    dir:*)
+      d="${entry#dir:}"
+      # каталог локалей — только наш (внутри лишь *.js); чужое не трогаем:
+      # удаляем пофайлово, сам каталог — если пуст
+      for lf in "$d/"*.js; do
+        [ -e "$lf" ] || continue
+        rm -f "$lf" && log "removed $lf" && CHANGED=1
+      done
+      rmdir "$d" 2>/dev/null && log "removed empty $d"
+      continue
+      ;;
     */nfc_ndef_backup.bin) log "backup untouched: $entry"; continue ;;
   esac
   if [ -e "$entry" ]; then

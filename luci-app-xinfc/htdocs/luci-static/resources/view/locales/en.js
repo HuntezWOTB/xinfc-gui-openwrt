@@ -1,0 +1,20 @@
+'use strict';
+/* English strings for luci-app-xinfc (fallback language). */
+return {
+	subtitle: 'Write Wi-Fi credentials to the router NFC chip. Tap the phone to the router to get a connect prompt.',
+	profile: 'Profile', p2g: '2.4 GHz (from router settings)', p5g: '5 GHz (from router settings)',
+	pmanual: 'Manual (e.g. guest network)', iface: 'Interface', ssid: 'SSID', enc: 'Encryption', key: 'Password',
+	keyHint: 'Typed here only and sent straight to the write. Keys from router settings never reach the browser.',
+	bus: 'I2C bus', addr: 'Chip I2C address', detect: 'Detect chip', write: 'Write to chip',
+	writeConfirm: 'Write data to the NFC chip? Old content will be replaced.', result: 'Result',
+	nokey: 'This interface has no key in settings — enter manually or check the network.',
+	wpa3err: 'Pure WPA3/SAE/OWE is not supported by the chip. Pick a mixed mode or WPA2.',
+	wpa3warn: 'Mixed WPA2/WPA3 will be announced to the phone as WPA2.', noiface: 'No interfaces in this band.',
+	backupOk: 'Stock chip backup is in place',
+	backupMiss: 'No stock backup yet — the first write will create it. Keep it safe!',
+	lang: 'Language', busy: 'Working…', ok: 'Written successfully. Tap the phone to the router.',
+	fail: 'Write failed (see output).', tagContent: 'Tag content', chipTitle: 'Chip', events: 'Recent events',
+	ssidLabel: 'Network name',
+	i2cHint: 'I2C is the tiny internal bus the router uses to talk to the chip (two wires: data and clock). The panel uses it to find the chip and write the tag.',
+	mapSub: 'Wi-Fi credentials for the router NFC chip (Xiaomi AX3000T and alike).'
+};
