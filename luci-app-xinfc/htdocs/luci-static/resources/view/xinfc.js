@@ -190,11 +190,7 @@ return view.extend({
 				'class': 'btn cbi-button cbi-button-neutral' + (l[0] === lang ? ' cbi-button-apply' : ''),
 				'data-lang': l[0], 'style': 'margin:1px;padding:2px 6px;'
 			}, l[1]);
-		}).reduce(function(acc, b, i) {
-			if (i > 0) acc.push(' ');
-			acc.push(b);
-			return acc;
-		}, []);
+		});
 
 		m = new form.Map('xinfc', _('NFC'),
 			_('Wi-Fi credentials to the router NFC chip (Xiaomi AX3000T and alike).') +

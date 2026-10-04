@@ -1,5 +1,5 @@
 #!/bin/sh
-# Быстрая диагностика NFC на роутере: sh check.sh
+# Fast NFC diagnostics on the router: sh check.sh
 set -eu
 echo "== tool =="; ls -l /usr/sbin/xinfc-wsc 2>/dev/null || echo "no tool"
 /usr/sbin/xinfc-wsc 2>&1 | head -2 || true
