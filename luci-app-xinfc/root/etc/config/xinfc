@@ -1,4 +1,0 @@
-config xinfc 'main'
-	option bus '0'
-	option addr '0x57'
-	option lang 'en'
