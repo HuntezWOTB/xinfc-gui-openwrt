@@ -51,7 +51,9 @@ ARCH="$(uname -m)"
 log "arch: $ARCH"
 
 # --- binary: only aarch64 bundled ---
-if grep -qxF "$BIN" "$MANIFEST" 2>/dev/null; then
+# NOTE: executable bit wins over the manifest — a stale record with
+# a missing file reinstalls instead of being trusted.
+if [ -x "$BIN" ] && grep -qxF "$BIN" "$MANIFEST" 2>/dev/null; then
   log "binary is ours, keeping: $BIN"
   remember "$BIN"
 elif [ -x "$BIN" ]; then
@@ -80,14 +82,15 @@ else
   esac
 fi
 
-# --- runtime deps: libstdc++ for the C++ binary, i2c-tools for chip search ---
-# (writes themselves go over ioctl and don't need i2c-tools)
+# --- runtime deps: libstdcpp for the C++ binary, i2c-tools for chip search ---
+# (writes themselves go over ioctl and don't need i2c-tools).
+# NOTE: the OpenWrt package is named libstdcpp, not libstdc++.
 NEED_APK=0
-[ -e /usr/lib/libstdc++.so.6 ] || [ -e /usr/libexec/libstdc++.so.6 ] || NEED_APK=1
+ls /usr/lib/libstdcpp.so* >/dev/null 2>&1 || NEED_APK=1
 [ -x /usr/sbin/i2cdetect ] || NEED_APK=1
 if [ "$NEED_APK" = "1" ]; then
-  log "installing runtime deps (libstdc++, i2c-tools)"
-  apk update && apk add libstdc++ i2c-tools || log "apk failed — chip search may be unavailable"
+  log "installing runtime deps (libstdcpp, i2c-tools)"
+  apk update && apk add libstdcpp i2c-tools || log "apk failed — chip search may be unavailable"
 else
   log "runtime deps present"
 fi
