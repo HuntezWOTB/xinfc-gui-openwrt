@@ -1,14 +1,15 @@
 #!/bin/sh
-# xinfc_owrt_install.sh — установка NFC-панели на OpenWrt одной командой.
+# xinfc_owrt_install.sh — one-command NFC panel setup on OpenWrt.
 #
-# Использование:
-#   sh xinfc_owrt_install.sh                    # из корня репозитория
-#   sh xinfc_owrt_install.sh --from-github      # скачать дерево с GitHub
+# Usage:
+#   sh xinfc_owrt_install.sh                    # from the repo root
+#   sh xinfc_owrt_install.sh --from-github      # fetch the tree from GitHub
 #   REPO=... REF=... sh xinfc_owrt_install.sh --from-github
 #
-# Ставит: бинарь xinfc-wsc (aarch64 в комплекте), панель Службы -> NFC,
-# бэкенд luci.xinfc, конфиг. Чужие файлы не трогает, поставленное пишет
-# в /etc/xinfc/install.manifest. Демона нет — чип хранит данные без питания.
+# Installs: xinfc-wsc binary (aarch64 bundled), Services -> NFC panel,
+# luci.xinfc backend, config. Never touches foreign files; everything
+# installed is recorded in /etc/xinfc/install.manifest. No daemon —
+# the chip keeps data with no power.
 set -eu
 
 REPO="${REPO:-https://github.com/HuntezWOTB/xinfc-gui-openwrt}"
@@ -36,8 +37,8 @@ if [ "$FROM_GITHUB" = "1" ]; then
 elif [ -d "luci-app-xinfc" ]; then
   SRC="$(pwd)/"
 else
-  log "ERROR: дерево репозитория не найдено."
-  log "Запустите из корня репозитория или добавьте --from-github."
+  log "ERROR: repo tree not found."
+  log "Run from the repo root or add --from-github."
   exit 1
 fi
 log "source: $SRC"
@@ -49,12 +50,12 @@ chmod 700 "$CONF_DIR"
 ARCH="$(uname -m)"
 log "arch: $ARCH"
 
-# --- бинарь: только aarch64 в комплекте ---
+# --- binary: only aarch64 bundled ---
 if grep -qxF "$BIN" "$MANIFEST" 2>/dev/null; then
   log "binary is ours, keeping: $BIN"
   remember "$BIN"
 elif [ -x "$BIN" ]; then
-  log "чужой $BIN уже есть — не трогаем, используем его"
+  log "foreign $BIN exists — leaving it alone, using it"
   printf 'keep:%s\n' "$BIN" >> "$MANIFEST.tmp"
 else
   case "$ARCH" in
@@ -65,9 +66,9 @@ else
       remember "$BIN"
       ;;
     *)
-      log "ERROR: готового бинаря под $ARCH нет."
-      log "Соберите xinfc-wsc из https://github.com/Caian/xinfc (см. docs/03-build.md)"
-      log "и повторите с BIN_FILE=/путь/к/xinfc-wsc sh xinfc_owrt_install.sh"
+      log "ERROR: no ready binary for $ARCH."
+      log "Build xinfc-wsc from https://github.com/Caian/xinfc (see Documentation/en/03-build.md)"
+      log "then rerun with BIN_FILE=/path/to/xinfc-wsc sh xinfc_owrt_install.sh"
       if [ -n "${BIN_FILE:-}" ] && [ -f "$BIN_FILE" ]; then
         cp "$BIN_FILE" "$BIN"
         chmod +x "$BIN"
@@ -79,15 +80,19 @@ else
   esac
 fi
 
-# --- i2c-tools для кнопки поиска чипа (сама запись идет через ioctl) ---
-if [ ! -x /usr/sbin/i2cdetect ]; then
-  log "installing i2c-tools (нужен для поиска чипа)"
-  apk update && apk add i2c-tools || log "не вышло — поиск чипа будет недоступен, запись работает"
+# --- runtime deps: libstdc++ for the C++ binary, i2c-tools for chip search ---
+# (writes themselves go over ioctl and don't need i2c-tools)
+NEED_APK=0
+[ -e /usr/lib/libstdc++.so.6 ] || [ -e /usr/libexec/libstdc++.so.6 ] || NEED_APK=1
+[ -x /usr/sbin/i2cdetect ] || NEED_APK=1
+if [ "$NEED_APK" = "1" ]; then
+  log "installing runtime deps (libstdc++, i2c-tools)"
+  apk update && apk add libstdc++ i2c-tools || log "apk failed — chip search may be unavailable"
 else
-  log "i2c-tools present"
+  log "runtime deps present"
 fi
 
-# --- панель LuCI ---
+# --- LuCI panel ---
 LUCI="$SRC/luci-app-xinfc"
 mkdir -p /usr/share/luci/menu.d
 cp "$LUCI/menu.d/luci-app-xinfc.json" /usr/share/luci/menu.d/luci-app-xinfc.json
@@ -106,7 +111,7 @@ if [ ! -f /etc/config/xinfc ]; then
   cp "$LUCI/root/etc/config/xinfc" /etc/config/xinfc
   remember "/etc/config/xinfc"
 else
-  log "/etc/config/xinfc exists — не затираем"
+  log "/etc/config/xinfc exists — leaving it alone"
 fi
 
 mv "$MANIFEST.tmp" "$MANIFEST"
@@ -115,8 +120,8 @@ rm -rf /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null || true
 /etc/init.d/rpcd restart 2>/dev/null || true
 /etc/init.d/uhttpd restart 2>/dev/null || true
 
-echo "--- проверка ---"
+echo "--- self-check ---"
 "$BIN" 2>&1 | head -2 || true
 ubus -S call luci.xinfc getConfig
-log "готово. Панель: разлогиньтесь/залогиньтесь, Службы -> NFC."
-log "ВАЖНО: первая запись сделает бэкап заводских данных в $CONF_DIR/nfc_ndef_backup.bin — сохраните его!"
+log "done. Panel: re-login, Services -> NFC."
+log "IMPORTANT: the first write backs up stock chip data to $CONF_DIR/nfc_ndef_backup.bin — save it!"
