@@ -185,16 +185,9 @@ return view.extend({
 			badgeEl.style.backgroundColor = ok == null ? '#666' : (ok ? '#12805c' : '#b52a1a');
 		}
 
-		var langBtns = LANGS.map(function(l) {
-			return E('button', {
-				'class': 'btn cbi-button cbi-button-neutral' + (l[0] === lang ? ' cbi-button-apply' : ''),
-				'data-lang': l[0], 'style': 'margin:1px;padding:2px 6px;'
-			}, l[1]);
-		});
-
 		m = new form.Map('xinfc', _('NFC'),
 			_('Wi-Fi credentials to the router NFC chip (Xiaomi AX3000T and alike).') +
-			'<div style="float:right;">' + T('lang') + ': <span id="xinfc-langs"></span></div>' +
+			'<div style="float:right;position:relative;">' + T('lang') + ': <span id="xinfc-langs"></span></div>' +
 			'<div style="clear:both;margin-top:4px;color:#999;">' + T('subtitle') + '</div>');
 
 		s = m.section(form.NamedSection, 'main', 'xinfc', T('tagContent'));
@@ -213,15 +206,12 @@ return view.extend({
 		o = s.option(form.ListValue, '_iface', T('iface'));
 		o.cfgvalue = function() { return state.iface; };
 		o.write = function() {};
+		o.optional = true;
 		o.depends('_profile', '2g');
 		o.depends('_profile', '5g');
 		ifacesOf('2g').forEach(function(i) {
 			o.value(i.name, i.name + (i.ssid ? ' (SSID: ' + i.ssid + ')' : ''));
 		});
-
-		o = s.option(form.DummyValue, '_netinfo', _('SSID'));
-		o.rawhtml = true;
-		o.cfgvalue = function() { return ''; };
 
 		o = s.option(form.Value, 'ssid', T('ssid'));
 		o.datatype = 'maxlength(32)';
@@ -297,7 +287,7 @@ return view.extend({
 		}
 
 		function paintNetinfo() {
-			var el = box.parentNode && box.parentNode.querySelector('[id="cbid.xinfc.main._netinfo"] .cbi-value-field');
+			var el = box.parentNode && box.parentNode.querySelector('[id="cbid.xinfc.main._iface"] .cbi-value-description');
 			if (!el) return;
 			if (state.profile === 'manual') { el.innerHTML = ''; return; }
 			var i = findIface(state.iface);
@@ -368,7 +358,37 @@ return view.extend({
 		return m.render().then(function(mapNode) {
 			var wrap = E('div', {}, [mapNode, box]);
 			var langSlot = wrap.querySelector('#xinfc-langs');
-			if (langSlot) langBtns.forEach(function(n) { langSlot.appendChild(n); });
+			if (langSlot) {
+				var curName = lang;
+				LANGS.forEach(function(l) { if (l[0] === lang) curName = l[1]; });
+				var menu = E('div', {
+					'style': 'display:none;position:absolute;right:0;top:100%;z-index:50;background:#222;border:1px solid #444;border-radius:4px;min-width:140px;'
+				}, LANGS.map(function(l) {
+					return E('div', {
+						'data-lang': l[0],
+						'style': 'padding:5px 10px;cursor:pointer;color:' + (l[0] === lang ? '#fff;font-weight:bold;' : '#ccc;')
+					}, (l[0] === lang ? '● ' : '○ ') + l[1]);
+				}));
+				var globe = E('button', {
+					'class': 'btn cbi-button cbi-button-neutral', 'style': 'padding:2px 8px;'
+				}, '🌐 ' + curName + ' ▾');
+				var holder = E('span', { 'style': 'position:relative;display:inline-block;' }, [globe, menu]);
+				langSlot.appendChild(holder);
+				globe.addEventListener('click', function(ev) {
+					ev.preventDefault();
+					menu.style.display = (menu.style.display === 'none') ? 'block' : 'none';
+				});
+				document.addEventListener('click', function(ev) {
+					if (!holder.contains(ev.target)) menu.style.display = 'none';
+				});
+				menu.querySelectorAll('div[data-lang]').forEach(function(item) {
+					item.addEventListener('click', function(ev) {
+						ev.preventDefault();
+						menu.style.display = 'none';
+						callSetLang(item.getAttribute('data-lang')).then(function() { location.reload(); });
+					});
+				});
+			}
 			wrap.querySelectorAll('button[data-lang]').forEach(function(btn) {
 				btn.addEventListener('click', function(ev) {
 					ev.preventDefault();
