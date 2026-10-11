@@ -95,16 +95,16 @@ else
   log "runtime deps present"
 fi
 
-# --- LuCI panel ---
+# --- LuCI panel (sources live under luci-app-xinfc/root/, buildable via luci.mk) ---
 LUCI="$SRC/luci-app-xinfc"
 mkdir -p /usr/share/luci/menu.d
-cp "$LUCI/menu.d/luci-app-xinfc.json" /usr/share/luci/menu.d/luci-app-xinfc.json
+cp "$LUCI/root/usr/share/luci/menu.d/luci-app-xinfc.json" /usr/share/luci/menu.d/luci-app-xinfc.json
 remember "/usr/share/luci/menu.d/luci-app-xinfc.json"
 mkdir -p /usr/share/rpcd/acl.d
-cp "$LUCI/rpcd/luci-app-xinfc.json" /usr/share/rpcd/acl.d/luci-app-xinfc.json
+cp "$LUCI/root/usr/share/rpcd/acl.d/luci-app-xinfc.json" /usr/share/rpcd/acl.d/luci-app-xinfc.json
 remember "/usr/share/rpcd/acl.d/luci-app-xinfc.json"
 mkdir -p /usr/libexec/rpcd
-cp "$LUCI/rpcd-exec/luci.xinfc" /usr/libexec/rpcd/luci.xinfc
+cp "$LUCI/root/usr/libexec/rpcd/luci.xinfc" /usr/libexec/rpcd/luci.xinfc
 chmod +x /usr/libexec/rpcd/luci.xinfc
 remember "/usr/libexec/rpcd/luci.xinfc"
 mkdir -p /www/luci-static/resources/view/locales
